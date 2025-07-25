@@ -510,7 +510,7 @@ holidays = {
     }
 ```
 
-Bill of Materials
+# Bill of Materials
 
 | **Part** | **Note** | **Price** | **Link** |
 |:--:|:--:|:--:|:--:|
@@ -525,3 +525,4 @@ Bill of Materials
 # Other Resources/Examples
 
 - [Adafruit Pyportal Overview](https://learn.adafruit.com/pyportal-weather-station/overview)
+- [Adafruit Pyportal Backlight/Brightness](https://learn.adafruit.com/making-a-pyportal-user-interface-displayio/display)
