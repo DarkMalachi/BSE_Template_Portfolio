@@ -509,6 +509,7 @@ holidays = {
     'xmas' : ('Dec. 25', 'Merry Christmas!')
     }
 ```
+
 | **Part** | **Note** | **Price** | **Link** |
 |:--:|:--:|:--:|:--:|
 | Adafruit PyPortal Titano |The device on which the entire project is run | $59.95 | <a href="https:https://www.adafruit.com/product/4444"> Link </a> |
