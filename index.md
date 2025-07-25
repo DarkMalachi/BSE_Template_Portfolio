@@ -6,10 +6,9 @@ The PyPortal Titano Retro Weather Station displays the local temperature, weathe
 | Malachi J | Institute for Collabortive Education (ICE) | Civil Engineering | Incoming Senior
 
 ![Headstone Image](myself.jpg)
+
   
 # Final Milestone
-
-**Don't forget to replace the text below with the embedding for your milestone video. Go to Youtube, click Share -> Embed, and copy and paste the code to replace what's below.**
 
 <iframe width="667" height="375" src="https://www.youtube.com/embed/4FySYY1a4lU" title="Malachi J Final Milestone" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
@@ -19,8 +18,6 @@ For the final milestone I got to finish the modifications for my project includi
 
 
 # Second Milestone
-
-**Don't forget to replace the text below with the embedding for your milestone video. Go to Youtube, click Share -> Embed, and copy and paste the code to replace what's below.**
 
 <iframe width="667" height="375" src="https://www.youtube.com/embed/N8ZDS43XqOE" title="Malachi JT Milestone 2" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
@@ -39,9 +36,6 @@ My first Milestone was mainly developing the code for the Pyportal and had downl
 
 ![Headstone Image](PyportalSchematic.jpg)
   
-
-# Code
-Here's where you'll put your code. The syntax below places it into a block of code. Follow the guide [here]([url](https://www.markdownguide.org/extended-syntax/)) to learn how to customize it to your project needs. 
 
 Code.py
 ```c++
@@ -515,12 +509,6 @@ holidays = {
     'xmas' : ('Dec. 25', 'Merry Christmas!')
     }
 ```
-
-
-
-Here's where you'll list the parts in your project. To add more rows, just copy and paste the example rows below.
-Don't forget to place the link of where to buy each component inside the quotation marks in the corresponding row after href =. Follow the guide [here]([url](https://www.markdownguide.org/extended-syntax/)) to learn how to customize this to your project needs. 
-
 | **Part** | **Note** | **Price** | **Link** |
 |:--:|:--:|:--:|:--:|
 | Adafruit PyPortal Titano |The device on which the entire project is run | $59.95 | <a href="https:https://www.adafruit.com/product/4444"> Link </a> |
@@ -532,9 +520,7 @@ Don't forget to place the link of where to buy each component inside the quotati
 | 8GB micro SD Card | Used to store high-storage files which the PyPortal Titano does not have the storage to store in itself | $9.95 | <a href="https:https://www.adafruit.com/product/2692"> Link </a> |
 
 # Other Resources/Examples
-One of the best parts about Github is that you can view how other people set up their own work. Here are some past BSE portfolios that are awesome examples. You can view how they set up their portfolio, and you can view their index.md files to understand how they implemented different portfolio components.
+
 - [Example 1](https://trashytuber.github.io/YimingJiaBlueStamp/)
 - [Example 2](https://sviatil0.github.io/Sviatoslav_BSE/)
 - [Example 3](https://arneshkumar.github.io/arneshbluestamp/)
-
-To watch the BSE tutorial on how to create a portfolio, click here.
