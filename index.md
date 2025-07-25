@@ -43,20 +43,264 @@ My first Milestone was mainly developing the code for the Pyportal and had downl
 # Code
 Here's where you'll put your code. The syntax below places it into a block of code. Follow the guide [here]([url](https://www.markdownguide.org/extended-syntax/)) to learn how to customize it to your project needs. 
 
-```c++
-void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(9600);
-  Serial.println("Hello World!");
-}
+```Code.py
 
-void loop() {
-  // put your main code here, to run repeatedly:
+# SPDX-FileCopyrightText: 2020 Liz Clark for Adafruit Industries
+# SPDX-License-Identifier: MIT
 
-}
-```
+from os import getenv
+import time
+from calendar import alarms
+from calendar import timers
+import board
+import displayio
+from digitalio import DigitalInOut, Direction, Pull
+from adafruit_button import Button
+from adafruit_pyportal import PyPortal
+import openweather_graphics  # Custom module
+import analogio
+import os
+import microcontroller
+import digitalio
 
-# Bill of Materials
+# --- Configuration ---
+ssid = getenv("CIRCUITPY_WIFI_SSID")
+password = getenv("CIRCUITPY_WIFI_PASSWORD")
+LOCATION = getenv("location")
+OPENWEATHER_TOKEN = getenv("openweather_token")
+
+if None in [ssid, password, LOCATION, OPENWEATHER_TOKEN]:
+    raise RuntimeError("Missing WiFi or weather config in settings.toml")
+
+DATA_SOURCE = f"http://api.openweathermap.org/data/2.5/weather?q={LOCATION}&appid={OPENWEATHER_TOKEN}"
+DATA_LOCATION = []
+
+# --- Initialize PyPortal ---
+pyportal = PyPortal(url=DATA_SOURCE,
+                    json_path=DATA_LOCATION,
+                    status_neopixel=board.NEOPIXEL,
+                    default_bg=0x000000)
+
+display = board.DISPLAY
+
+#--- Light Sensor for Brightness ---
+#light_sensor = analogio.AnalogIn(board.A2)
+#def get_scaled_brightness():
+    #scaled = light_sensor.value / 65535
+    #return max(0.1, min(scaled, 1.0))
+
+# --- Setup Weather Graphics ---
+gfx = openweather_graphics.OpenWeather_Graphics(pyportal.splash, am_pm=True, celsius=False)
+
+# --- Alarm Assets ---
+alarm_sound_trash = "/sounds/trash.wav"
+alarm_sound_bed = "/sounds/sleep.wav"
+alarm_sound_eat = "/sounds/eat.wav"
+alarm_sounds = [alarm_sound_trash, alarm_sound_bed, alarm_sound_eat, alarm_sound_eat, alarm_sound_eat]
+
+bitmap_paths = ["/trashBMP.bmp", "/sleepBMP.bmp", "/eatBMP.bmp"]
+alarm_gfx = []
+
+for path in bitmap_paths:
+    bmp = displayio.OnDiskBitmap(path)
+    tilegrid = displayio.TileGrid(bmp, pixel_shader=bmp.pixel_shader)
+    group = displayio.Group()
+    group.append(tilegrid)
+    alarm_gfx.append(group)
+
+# Duplicate eat gfx to fill 3 meal times
+alarm_gfx += [alarm_gfx[2], alarm_gfx[2]]
+
+# --- Buttons ---
+snooze_positions = [(4, 222)] * 3
+dismiss_positions = [(245, 222)] * 3
+
+snooze_buttons = [Button(x=x, y=y, width=236, height=90, style=Button.RECT, name=f"snooze_{i}")
+                  for i, (x, y) in enumerate(snooze_positions)]
+dismiss_buttons = [Button(x=x, y=y, width=230, height=90, style=Button.RECT, name=f"dismiss_{i}")
+                   for i, (x, y) in enumerate(dismiss_positions)]
+
+for i in range(3):
+    alarm_gfx[i].append(snooze_buttons[i].group)
+    alarm_gfx[i].append(dismiss_buttons[i].group)
+
+# --- Hardware Buttons (moved off D3/D4) ---
+switch_snooze = DigitalInOut(board.D3)  # Left button
+switch_snooze.direction = Direction.INPUT
+switch_snooze.pull = Pull.UP
+
+switch_dismiss = DigitalInOut(board.D4)  # Right button
+switch_dismiss.direction = Direction.INPUT
+switch_dismiss.pull = Pull.UP
+
+# --- Alarm Logic ---
+weekday = ["Mon.", "Tues.", "Wed.", "Thurs.", "Fri.", "Sat.", "Sun."]
+weekly_alarms = [alarms['trash']]
+weekly_day = [alarms['trash'][0]]
+weekly_time = [alarms['trash'][1]]
+alarm_checks = [None, alarms['bed'], alarms['breakfast'], alarms['lunch'], alarms['dinner']]
+
+# --- State Variables ---
+localtile_refresh = None
+weather_refresh = None
+start = None
+alarm = False
+snoozed = False
+dismissed = False
+touched = None
+phys_dismiss = False
+phys_snooze = False
+touch_button_snooze = False
+touch_button_dismiss = False
+mode = 0
+
+# --- Main Loop ---
+while True:
+        # while esp.is_connected:
+    # only query the online time once per hour (and on first run)
+    if (not localtile_refresh) or (time.monotonic() - localtile_refresh) > 3600:
+        try:
+            print("Getting time from internet!")
+            pyportal.get_local_time()
+            localtile_refresh = time.monotonic()
+        except RuntimeError as e:
+            print("Some error occured, retrying! -", e)
+            continue
+
+    if not alarm:
+    # only query the weather every 10 minutes (and on first run)
+    #  only updates if an alarm is not active
+        if (not weather_refresh) or (time.monotonic() - weather_refresh) > 600:
+            try:
+                value = pyportal.fetch()
+                print("Response is", value)
+                gfx.display_weather(value)
+                weather_refresh = time.monotonic()
+            except RuntimeError as e:
+                print("Some error occured, retrying! -", e)
+                continue
+    #  updates time to check alarms
+    #  checks every 30 seconds
+    #  identical to def(update_time) in openweather_graphics.py
+    if (not start) or (time.monotonic() - start) > 30:
+        #  grabs all the time data
+        clock = time.localtime()
+        date = clock[2]
+        hour = clock[3]
+        minute = clock[4]
+        day = clock[6]
+        today = weekday[day]
+        format_str = "%d:%02d"
+        date_format_str = " %d, %d"
+        if hour >= 12:
+            hour -= 12
+            format_str = format_str+" PM"
+        else:
+            format_str = format_str+" AM"
+        if hour == 0:
+            hour = 12
+        #  formats date display
+        today_str = today
+        time_str = format_str % (hour, minute)
+        #  checks for weekly alarms
+        for i in weekly_alarms:
+            w = weekly_alarms.index(i)
+            if time_str == weekly_time[w] and today == weekly_day[w]:
+                print("trash time")
+                alarm = True
+                if alarm and not dismissed and not snoozed:
+                    display.root_group = alarm_gfx[w]
+                    pyportal.play_file(alarm_sounds[w])
+                mode = w
+                print("mode is:", mode)
+        #  checks for daily alarms
+        for i in alarm_checks:
+            a = alarm_checks.index(i)
+            if time_str == alarm_checks[a]:
+                alarm = True
+                if alarm and not dismissed and not snoozed:
+                    display.root_group = alarm_gfx[a]
+                    pyportal.play_file(alarm_sounds[a])
+                mode = a
+                print(mode)
+        #  calls update_time() from openweather_graphics to update
+        #  clock display
+        #board.DISPLAY.brightness = get_scaled_brightness()
+        gfx.update_time()
+        gfx.update_date()
+        start = time.monotonic()
+
+    #  allows for the touchscreen buttons to work
+    if mode > 1:
+        button_mode = 2
+    else:
+        button_mode = mode
+        #  print("button mode is", button_mode)
+
+    #  hardware snooze/dismiss button setup
+    if switch_dismiss.value and phys_dismiss:
+        phys_dismiss = False
+    if switch_snooze.value and phys_snooze:
+        phys_snooze = False
+    if not switch_dismiss.value and not phys_dismiss:
+        phys_dismiss = True
+        print("pressed dismiss button")
+        dismissed = True
+        alarm = False
+        display.root_group = pyportal.splash
+        touched = time.monotonic()
+        mode = mode
+    if not switch_snooze.value and not phys_snooze:
+        phys_snooze = True
+        print("pressed snooze button")
+        display.root_group = pyportal.splash
+        snoozed = True
+        alarm = False
+        touched = time.monotonic()
+        mode = mode
+
+    #  touchscreen button setup
+    touch = pyportal.touchscreen.touch_point
+    if not touch and touch_button_snooze:
+        touch_button_snooze = False
+    if not touch and touch_button_dismiss:
+        touch_button_dismiss = False
+    if touch:
+        if snooze_buttons[button_mode].contains(touch) and not touch_button_snooze:
+            print("Touched snooze")
+            display.root_group = pyportal.splash
+            touch_button_snooze = True
+            snoozed = True
+            alarm = False
+            touched = time.monotonic()
+            mode = mode
+        if dismiss_buttons[button_mode].contains(touch) and not touch_button_dismiss:
+            print("Touched dismiss")
+            dismissed = True
+            alarm = False
+            display.root_group = pyportal.splash
+            touch_button_dismiss = True
+            touched = time.monotonic()
+            mode = mode
+
+    #  this is a little delay so that the dismissed state
+    #  doesn't collide with the alarm if it's dismissed
+    #  during the same time that the alarm activates
+    if (not touched) or (time.monotonic() - touched) > 70:
+        dismissed = False
+    #  snooze portion
+    #  pulls snooze_time from calendar and then when it's up
+    #  splashes the snoozed alarm's graphic, plays the alarm sound and goes back into
+    #  alarm state
+    if (snoozed) and (time.monotonic() - touched) > timers['snooze_time']:
+        print("snooze over")
+        snoozed = False
+        alarm = True
+        mode = mode
+        display.root_group = alarm_gfx[mode]
+        pyportal.play_file(alarm_sounds[mode])
+        print(mode)
+
 Here's where you'll list the parts in your project. To add more rows, just copy and paste the example rows below.
 Don't forget to place the link of where to buy each component inside the quotation marks in the corresponding row after href =. Follow the guide [here]([url](https://www.markdownguide.org/extended-syntax/)) to learn how to customize this to your project needs. 
 
