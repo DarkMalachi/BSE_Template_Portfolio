@@ -37,7 +37,7 @@ My first Milestone was mainly developing the code for the Pyportal and had downl
 
 # Schematics 
 
-![Headstone Image](myself.jpg)
+![Headstone Image](PyportalSchematic.jpg)
   
 
 # Code
