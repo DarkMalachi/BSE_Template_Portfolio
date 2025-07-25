@@ -489,8 +489,32 @@ class OpenWeather_Graphics(displayio.Group):
         self._icon_sprite = displayio.TileGrid(icon, pixel_shader=icon.pixel_shader)
 
         self._icon_group.append(self._icon_sprite)
+```
+Calender.py
+```
+# SPDX-FileCopyrightText: 2020 Liz Clark for Adafruit Industries
+#
+# SPDX-License-Identifier: MIT
 
+alarms = {
+    'bed' : '12:00 PM',
+    'breakfast' : '8:00 AM',
+    'lunch' : '12:00 PM',
+    'dinner' : '9:30 PM',
+    'trash' : ('Fri.', '1:00 PM')
+    }
 
+timers = {
+    'snooze_time' : 300
+    }
+
+holidays = {
+    'new years' : ('Jan. 1', 'Happy New Year!'),
+    'valentines' : ('Feb. 14', "Happy Valentine's Day! <3"),
+    'halloween' : ('Oct. 31', 'Happy Halloween!'),
+    'xmas' : ('Dec. 25', 'Merry Christmas!')
+    }
+```
 
 
 
